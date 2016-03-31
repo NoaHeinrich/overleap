@@ -38,6 +38,11 @@ describe Overleap do
       it "raises a TypeError if not given a Faraday connection" do
         expect{ Overleap::Report.generate_report(5, @data) }.to raise_error(TypeError)
       end
+
+      it "raises a RuntimeError if not all data does not include income" do
+        bad_data = { zipcode: 60641, age: 25 }
+        expect{ Overleap::Report.generate_report(@test, bad_data)}.to raise_error(RuntimeError)
+      end
     end
   end
 
