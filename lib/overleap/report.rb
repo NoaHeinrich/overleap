@@ -11,6 +11,7 @@ module Overleap
       @ranking = attributes["ranking"]
     end
 
+
     def self.generate_report(source, data)
       check_faraday(source)
       check_data(data)
