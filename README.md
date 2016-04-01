@@ -1,28 +1,40 @@
 # Overleap
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/overleap`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Overleap is a simple gem written for Leapfrog Online's coding challenge. It integrates with a hypothetical API, and creates an object meant to represent client data.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+I have not pushed this to Rubygems, so for now you can include Overleap like you would any other module.
 
-```ruby
-gem 'overleap'
-```
+Dependencies:
+ruby 2.1.6
+rspec 3.4.0
+json 1.8.3
+webmock 1.24.2
+faraday 0.9.2
+rake 10.5.0
 
-And then execute:
+Run
+    bundle install
+To install the gems necessary.
 
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install overleap
+To run the test suite, simply type
+    rspec
+from the root directory.
 
 ## Usage
 
-TODO: Write usage instructions here
+This gem can be used to get a score report from an API that provides this information. It uses the Faraday gem to manage HTTP connections. To establish a Faraday connection:
+    source = Overleap::Report.create_connection(url)
+This will create a connection that can be used to connect to the API. To generate a report, do the following:
+    report = Overleap::Report.generate_report(source, { income: 1000, zipcode: 12345, age: 25 })
+
+    report.propensity
+    #=> .01212121
+
+    report.ranking
+    #=> "C"
+The data you provide must include income, zipcode, and age in order to generate a report.
 
 ## Development
 
@@ -32,7 +44,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/overleap.
+Bug reports and pull requests are welcome on GitHub at https://github.com/NoahHeinrich/overleap.
 
 
 ## License
