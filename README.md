@@ -15,22 +15,28 @@ faraday 0.9.2
 rake 10.5.0
 
 Run
+
     bundle install
 To install the gems necessary.
 
 To run the test suite, simply type
+
     rspec
 from the root directory.
 
 ## Usage
 
 This gem can be used to get a score report from an API that provides this information. It uses the Faraday gem to manage HTTP connections. To establish a Faraday connection:
+
     source = Overleap::Report.create_connection(url)
 This will create a connection that can be used to connect to the API. To generate a report, do the following:
+
     report = Overleap::Report.generate_report(source, { income: 1000, zipcode: 12345, age: 25 })
+    
 
     report.propensity
     #=> .01212121
+    
 
     report.ranking
     #=> "C"
