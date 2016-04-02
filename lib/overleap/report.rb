@@ -1,6 +1,5 @@
 require 'faraday'
 require 'json'
-
 module Overleap
   class Report
     attr_reader :propensity, :ranking
