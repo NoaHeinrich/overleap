@@ -1,6 +1,5 @@
 require 'faraday'
 require 'json'
-
 module Overleap
   class Report
     attr_reader :propensity, :ranking
@@ -15,7 +14,10 @@ module Overleap
     def self.generate_report(source, data)
       check_faraday(source)
       check_data(data)
-      response = source.get "/customer_scoring", { :income => data[:income], :zipcode => data[:zipcode], :age => data[:age] }
+      response = source.get "/customer_scoring",
+        { :income => data[:income],
+        :zipcode => data[:zipcode],
+        :age => data[:age] }
       attributes = JSON.parse(response.body)
       check_response(attributes)
       new(attributes)

@@ -1,5 +1,4 @@
 require_relative 'spec_helper'
-
 describe Overleap do
   before(:all) do
     hash = { propensity: 1, ranking: 'C' }
@@ -22,7 +21,7 @@ describe Overleap do
 
   describe Overleap::Report do
     describe "#new" do
-      it "creates an Overlap::Report object" do
+      it "creates an Overleap::Report object" do
         report = Overleap::Report.new({ "propensity" => 1, "ranking" => "C" })
         expect(report).to be_a Overleap::Report
       end
@@ -79,6 +78,19 @@ describe Overleap do
         end
 
         expect{ Overleap::Report.generate_report(test, @data) }.to raise_error(RuntimeError)
+      end
+
+      it "raises an error if response is not JSON" do
+        stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+          stub.get('/customer_scoring') { |env| [200, {}, "test"] }
+        end
+
+        test = Faraday.new do |builder|
+          builder.adapter :test, stubs do |stub|
+          end
+        end
+
+        expect{ Overleap::Report.generate_report(test, @data) }.to raise_error(JSON::ParserError)
       end
     end
 
