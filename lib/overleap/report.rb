@@ -3,16 +3,9 @@ require 'json'
 module Overleap
   class Report
     attr_reader :propensity, :ranking
-    # def initialize(attributes)
-    #   raise ArgumentError unless attributes.has_key?("propensity") && attributes.has_key?("ranking")
-
-    #   @propensity = attributes["propensity"]
-    #   @ranking = attributes["ranking"]
-    # end
-
     def initialize(url, data)
-      connection = make_connection(url)
-      response = get_response(connection, data)
+      connection = Overleap::Report.make_connection(url)
+      response = Overleap::Report.get_response(connection, data)
       @propensity = response["propensity"]
       @ranking = response["ranking"]
     end
@@ -27,6 +20,7 @@ module Overleap
     end
 
     def self.get_response(socket, data)
+      attributes = nil
       check_faraday(socket)
       check_data(data)
       response = socket.get "/customer_scoring",
@@ -38,29 +32,6 @@ module Overleap
       attributes
     end
 
-
-    # def self.generate_report(source, data)
-    #   check_faraday(source)
-    #   check_data(data)
-    #   response = source.get "/customer_scoring",
-    #     { :income => data[:income],
-    #     :zipcode => data[:zipcode],
-    #     :age => data[:age] }
-    #   attributes = JSON.parse(response.body)
-    #   check_response(attributes)
-    #   new(attributes)
-    # end
-
-    # def self.create_connection(url)
-    #   connection = Faraday.new(:url => url) do |faraday|
-    #     faraday.request  :url_encoded
-    #     faraday.response :logger
-    #     faraday.adapter  Faraday.default_adapter
-    #   end
-    #   connection.get
-    #   connection
-    # end
-
     private
 
     def self.check_faraday(source)
@@ -68,11 +39,19 @@ module Overleap
     end
 
     def self.check_data(data)
-      raise RuntimeError, "The information you entered was either incomplete or incorrect. Please include income, zipcode, and age." unless data.has_key?(:income) && data.has_key?(:zipcode) && data.has_key?(:age)
+      if data.is_a? Hash
+        raise RuntimeError, "The information you entered was either incomplete or incorrect. Please include income, zipcode, and age." unless data.has_key?(:income) && data.has_key?(:zipcode) && data.has_key?(:age)
+      else
+        raise RuntimeError, "The information you entered was either incomplete or incorrect. Please include income, zipcode, and age in a Hash."
+      end
     end
 
     def self.check_response(response)
-      raise RuntimeError, "The received response did not include correct data. Please check that your source leads to the correct API." unless response.has_key?("propensity") && response.has_key?("ranking")
+      if response.is_a? Hash
+        raise RuntimeError, "The received response did not include correct data. Please check that your source leads to the correct API." unless response.has_key?("propensity") && response.has_key?("ranking")
+      else
+        raise RuntimeError, "The received response was not a JSON. Please check that your source leads to the correct API."
+      end
     end
   end
 end
