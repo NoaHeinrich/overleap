@@ -27,6 +27,7 @@ from the root directory.
 ## Usage
 
 This gem can be used to get a score report from an API that provides this information. It uses the Faraday gem to manage HTTP connections. To create a report, create a new Overleap::Report object, with the url, and a hash of data.
+    
     report = Overleap::Report.new("http://fake-url.com", {income: 2000, zipcode: 12345, age: 25})
 
     report.propensity
