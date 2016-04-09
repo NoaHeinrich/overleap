@@ -10,6 +10,10 @@ module Overleap
       @ranking = response["ranking"]
     end
 
+    def to_s
+      puts "Propensity: #{@propensity}\n Response: #{@ranking}"
+    end
+
     def self.make_connection(url)
       connection = Faraday.new(:url => url) do |faraday|
         faraday.request  :url_encoded
