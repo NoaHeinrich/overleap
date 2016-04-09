@@ -19,50 +19,43 @@ describe Overleap do
     expect(Overleap::VERSION).not_to be nil
   end
 
+
   describe Overleap::Report do
-    describe "#new" do
-      it "creates an Overleap::Report object" do
-        report = Overleap::Report.new({ "propensity" => 1, "ranking" => "C" })
-        expect(report).to be_a Overleap::Report
-      end
-
-      it "raises an argument error if not given a propensity" do
-        expect{ Overleap::Report.new({ "ranking" => "C" }) }.to raise_error(ArgumentError)
-      end
-
-      it "raises an argument error if not given a ranking" do
-        expect{ Overleap::Report.new({ "propensity" => 1 }) }.to raise_error(ArgumentError)
-      end
-
-      it "raises an error if not given parameters" do
-        expect{ Overleap::Report.new }.to raise_error(ArgumentError)
+    describe "#make_connection" do
+      it "creates a Faraday connection" do
+        connection = Overleap::Report.make_connection("http://jsonplaceholder.typicode.com")
+        expect(connection).to be_a Faraday::Connection
       end
     end
 
-    describe "#generate_report" do
-      it "creates a Report given a faraday source and data" do
-        response = Overleap::Report.generate_report(@test, @data)
-        expect(response).to be_a Overleap::Report
+    describe "#get_response" do
+      it "returns a Hash" do
+        response = Overleap::Report.get_response(@test, @data)
+        expect(response).to be_a Hash
       end
 
-      it "generates a report with a propensity and ranking" do
-        response = Overleap::Report.generate_report(@test, @data)
-        expect(response.propensity).to eq 1
-        expect(response.ranking).to eq "C"
+      it "returns a Hash with correct data" do
+        response = Overleap::Report.get_response(@test, @data)
+        expect(response.has_key?("propensity")).to be true
+        expect(response.has_key?("ranking")).to be true
       end
 
       it "raises a TypeError if not given a Faraday connection" do
-        expect{ Overleap::Report.generate_report(5, @data) }.to raise_error(TypeError)
+        expect{ Overleap::Report.get_response("http://fake-url.com", @data) }.to raise_error(TypeError)
       end
 
-      it "raises a RuntimeError if data does not include income" do
+      it "raises a RuntimeError when data does not include income" do
         bad_data = { zipcode: 60641, age: 25 }
-        expect{ Overleap::Report.generate_report(@test, bad_data)}.to raise_error(RuntimeError)
+        expect{ Overleap::Report.get_response(@test, bad_data) }.to raise_error(RuntimeError)
       end
 
-      it "raises a RuntimeError if data does not include zipcode" do
-        bad_data = { income: 40, age: 25 }
-        expect{ Overleap::Report.generate_report(@test, bad_data)}.to raise_error(RuntimeError)
+      it "raises a RuntimeError when data does not include zipcode" do
+        bad_data = { income: 60641, age: 25 }
+        expect{ Overleap::Report.get_response(@test, bad_data) }.to raise_error(RuntimeError)
+      end
+
+      it "raises a RuntimeError if given data that is not a Hash" do
+        expect{ Overleap::Report.get_response(@test, "dfasdfdsaf") }.to raise_error(TypeError)
       end
 
       it "raises a RuntimeError if the response does not include the correct data" do
@@ -77,12 +70,12 @@ describe Overleap do
           end
         end
 
-        expect{ Overleap::Report.generate_report(test, @data) }.to raise_error(RuntimeError)
+        expect{ Overleap::Report.get_response(test, @data) }.to raise_error(RuntimeError)
       end
 
-      it "raises an error if response is not JSON" do
+      it "raises an error if the response is not JSON" do
         stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.get('/customer_scoring') { |env| [200, {}, "test"] }
+          stub.get('/customer_scoring') { |env| [200, {}, "C"] }
         end
 
         test = Faraday.new do |builder|
@@ -90,24 +83,66 @@ describe Overleap do
           end
         end
 
-        expect{ Overleap::Report.generate_report(test, @data) }.to raise_error(JSON::ParserError)
+        expect{ Overleap::Report.get_response(test, @data) }.to raise_error(JSON::ParserError )
+      end
+
+      it "raises an error if source leads to invalid url" do
+        WebMock.allow_net_connect!
+        socket = Overleap::Report.make_connection("http://fake-url.com")
+        expect{ Overleap::Report.get_response(socket, @data) }.to raise_error(Faraday::ConnectionFailed, "The URL you entered was either invalid, or incorrect.")
+      end
+
+      it "raises an error if it receives an error code" do
+        hash = { propensity: 1, ranking: 'C' }
+        js = JSON.generate(hash)
+        stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+          stub.get('/customer_scoring') { |env| [404, {}, js] }
+        end
+
+        test = Faraday.new do |builder|
+          builder.adapter :test, stubs do |stub|
+          end
+        end
+        expect{ Overleap::Report.get_response(test, @data) }.to raise_error(RuntimeError)
       end
     end
 
-    describe "#create_connection" do
-      it "creates a Faraday Connection" do
-        url = "http://jsonplaceholder.typicode.com"
-        stub_request(:get, url)
-        connection = Overleap::Report.create_connection(url)
-        expect(connection).to be_a Faraday::Connection
+    describe "#new" do
+      before(:each) do
+        WebMock.disable_net_connect!
+        hash = { propensity: 1, ranking: 'C' }
+        js = JSON.generate(hash)
+        stub_request(:get, "http://jsonplaceholder.typicode.com/customer_scoring?age=25&income=20000&zipcode=60641").with(:headers => {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'User-Agent'=>'Faraday v0.9.2'}).to_return(:status => 200, :body => js, :headers => {})
       end
 
-      it "raises an error if given an invalid url" do
-        url = "http://fake-url.com"
+      it "creates an Overleap Report" do
+        url = "http://jsonplaceholder.typicode.com"
+        report = Overleap::Report.new(url, @data)
+        expect(report).to be_a Overleap::Report
+      end
+
+      it "creates a Report with a propensity and ranking" do
+        url = "http://jsonplaceholder.typicode.com"
+        report = Overleap::Report.new(url, @data)
+        expect(report.propensity).to eq 1
+        expect(report.ranking).to eq "C"
+      end
+
+      it "raises an error if given data not in a hash" do
+        url = "http://jsonplaceholder.typicode.com"
+        expect{ Overleap::Report.new(url, "Hi") }.to raise_error(TypeError)
+      end
+
+      it "raises an error if given data does not include income" do
+        data = { zipcode: 60641, age: 25 }
+        url = "http://jsonplaceholder.typicode.com"
+        expect{ Overleap::Report.new(url, data) }.to raise_error(RuntimeError)
+      end
+
+      it "raises an error if given a bad url" do
         WebMock.allow_net_connect!
-        expect{ Overleap::Report.create_connection(url) }.to raise_error(Faraday::ConnectionFailed)
+        expect{ Overleap::Report.new("http://fake-url.com", @data) }.to raise_error(Faraday::ConnectionFailed, "The URL you entered was either invalid, or incorrect.")
       end
     end
   end
-
 end

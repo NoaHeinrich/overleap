@@ -26,17 +26,11 @@ from the root directory.
 
 ## Usage
 
-This gem can be used to get a score report from an API that provides this information. It uses the Faraday gem to manage HTTP connections. To establish a Faraday connection:
-
-    source = Overleap::Report.create_connection(url)
-This will create a connection that can be used to connect to the API. To generate a report, do the following:
-
-    report = Overleap::Report.generate_report(source, { income: 1000, zipcode: 12345, age: 25 })
-    
+This gem can be used to get a score report from an API that provides this information. It uses the Faraday gem to manage HTTP connections. To create a report, create a new Overleap::Report object, with the url, and a hash of data.
+    report = Overleap::Report.new("http://fake-url.com", {income: 2000, zipcode: 12345, age: 25})
 
     report.propensity
     #=> .01212121
-    
 
     report.ranking
     #=> "C"
