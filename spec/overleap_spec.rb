@@ -144,5 +144,18 @@ describe Overleap do
         expect{ Overleap::Report.new("http://fake-url.com", @data) }.to raise_error(Faraday::ConnectionFailed, "The URL you entered was either invalid, or incorrect.")
       end
     end
+
+    describe "#to_s" do
+      it "prints the propensity and ranking" do
+        WebMock.disable_net_connect!
+        hash = { propensity: 1, ranking: 'C' }
+        js = JSON.generate(hash)
+        stub_request(:get, "http://jsonplaceholder.typicode.com/customer_scoring?age=25&income=20000&zipcode=60641").with(:headers => {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'User-Agent'=>'Faraday v0.9.2'}).to_return(:status => 200, :body => js, :headers => {})
+        url = "http://jsonplaceholder.typicode.com"
+
+        report = Overleap::Report.new(url, @data)
+        expect { report.to_s }.to output("Propensity: #{report.propensity}\n Response: #{report.ranking}\n").to_stdout
+      end
+    end
   end
 end
