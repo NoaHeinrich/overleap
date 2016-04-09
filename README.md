@@ -36,7 +36,7 @@ This gem can be used to get a score report from an API that provides this inform
     report.ranking
     #=> "C"
 
-    repot.to_s
+    report.to_s
     #=> "Propensity: .01212121
     Ranking: C"
 The data you provide must include income, zipcode, and age in order to generate a report.
