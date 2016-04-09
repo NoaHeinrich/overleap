@@ -89,7 +89,7 @@ describe Overleap do
       it "raises an error if source leads to invalid url" do
         WebMock.allow_net_connect!
         socket = Overleap::Report.make_connection("http://fake-url.com")
-        expect{ Overleap::Report.get_response(socket, @data) }.to raise_error(Faraday::ConnectionFailed)
+        expect{ Overleap::Report.get_response(socket, @data) }.to raise_error(Faraday::ConnectionFailed, "The URL you entered was either invalid, or incorrect.")
       end
 
       it "raises an error if it receives an error code" do
@@ -128,14 +128,20 @@ describe Overleap do
         expect(report.ranking).to eq "C"
       end
 
-      it "raises an error if given bad data" do
+      it "raises an error if given data not in a hash" do
         url = "http://jsonplaceholder.typicode.com"
         expect{ Overleap::Report.new(url, "Hi") }.to raise_error(TypeError)
       end
 
+      it "raises an error if given data does not include income" do
+        data = { zipcode: 60641, age: 25 }
+        url = "http://jsonplaceholder.typicode.com"
+        expect{ Overleap::Report.new(url, data) }.to raise_error(RuntimeError)
+      end
+
       it "raises an error if given a bad url" do
         WebMock.allow_net_connect!
-        expect{ Overleap::Report.new("http://fake-url.com", @data) }.to raise_error
+        expect{ Overleap::Report.new("http://fake-url.com", @data) }.to raise_error(Faraday::ConnectionFailed, "The URL you entered was either invalid, or incorrect.")
       end
     end
   end

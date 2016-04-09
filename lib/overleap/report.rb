@@ -23,10 +23,14 @@ module Overleap
       attributes = nil
       check_faraday(socket)
       check_data(data)
-      response = socket.get "/customer_scoring",
-        { :income => data[:income],
-        :zipcode => data[:zipcode],
-        :age => data[:age] }
+      begin
+        response = socket.get "/customer_scoring",
+          { :income => data[:income],
+          :zipcode => data[:zipcode],
+          :age => data[:age] }
+      rescue
+        raise $!, "The URL you entered was either invalid, or incorrect."
+      end
       check_status_code(response.status)
       attributes = JSON.parse(response.body)
       check_response(attributes)
