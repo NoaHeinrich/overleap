@@ -27,6 +27,7 @@ module Overleap
         { :income => data[:income],
         :zipcode => data[:zipcode],
         :age => data[:age] }
+      check_status_code(response.status)
       attributes = JSON.parse(response.body)
       check_response(attributes)
       attributes
@@ -42,7 +43,7 @@ module Overleap
       if data.is_a? Hash
         raise RuntimeError, "The information you entered was either incomplete or incorrect. Please include income, zipcode, and age." unless data.has_key?(:income) && data.has_key?(:zipcode) && data.has_key?(:age)
       else
-        raise RuntimeError, "The information you entered was either incomplete or incorrect. Please include income, zipcode, and age in a Hash."
+        raise TypeError, "Please include income, zipcode, and age in a Hash."
       end
     end
 
@@ -50,8 +51,12 @@ module Overleap
       if response.is_a? Hash
         raise RuntimeError, "The received response did not include correct data. Please check that your source leads to the correct API." unless response.has_key?("propensity") && response.has_key?("ranking")
       else
-        raise RuntimeError, "The received response was not a JSON. Please check that your source leads to the correct API."
+        raise TypeError, "The received response was not a JSON. Please check that your source leads to the correct API."
       end
+    end
+
+    def self.check_status_code(code)
+      raise RuntimeError, "Error code #{code} received. Please confirm that you are connecting to the correct website." unless code == 200
     end
   end
 end
